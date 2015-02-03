@@ -8,19 +8,52 @@ class KursController extends \BaseController {
 	 * @return Response
 	 */
 
+	private function evaluateAverage($type = 'buy') {
+		$avg = Kurs::where('type', '=', $type)
+			->orderBy('created_at')
+			->take(1000)
+			->avg('kurs');
+
+		$value = Values::where('name', '=', 'average_'.$type)->first();
+		if ($value == NULL) {
+			$value = new Values();
+			$value->name = 'average_'.$type;
+		}
+		$value->value = $avg;
+		$value->save();
+
+		return $avg;
+	}
+
+	private function evaluateS($type = 'buy') {
+		$avg = $this->getAverage($type);
+		$kurses = Kurs::where('type', '=', $type)
+			->orderBy('created_at')
+			->take(1000)
+			->get()
+			->toArray();
+		$n = count($kurses);
+		$sum = array_reduce($kurses, function ($carry, $kurs) use ($avg) {
+			return pow($kurs['kurs'] - $avg, 2) + $carry;
+		}, 0);
+		$s = sqrt($sum / ($n - 1));
+
+		$value = Values::where('name', '=', 's_'.$type)->first();
+		if ($value == NULL) {
+			$value = new Values();
+			$value->name = 's_'.$type;
+		}
+		$value->value = $s;
+		$value->save();
+
+		return $s;
+	}
+
 	private function getAverage($type = 'buy') {
 		$avg = Values::where('name', '=', 'average_'.$type)->pluck('value');
 
 		if ($avg == NULL) {
-			$avg = Kurs::where('type', '=', $type)
-				->orderBy('created_at')
-				->take(1000)
-				->avg('kurs');
-
-			$value = new Values();
-			$value->name = 'average_'.$type;
-			$value->value = $avg;
-			$value->save();
+			$avg = $this->evaluateAverage($type);
 		}
 
 		return $avg;
@@ -30,22 +63,7 @@ class KursController extends \BaseController {
 		$s = Values::where('name', '=', 's_'.$type)->pluck('value');
 
 		if ($s == NULL) {
-			$avg = $this->getAverage($type);
-			$kurses = Kurs::where('type', '=', $type)
-				->orderBy('created_at')
-				->take(1000)
-				->get()
-				->toArray();
-			$n = count($kurses);
-			$sum = array_reduce($kurses, function ($carry, $kurs) use ($avg) {
-				return pow($kurs['kurs'] - $avg, 2) + $carry;
-			}, 0);
-			$s = sqrt($sum / ($n - 1));
-
-			$value = new Values();
-			$value->name = 's_'.$type;
-			$value->value = $s;
-			$value->save();
+			$s = $this->evaluateS($type);
 		}
 
 		return $s;
@@ -54,6 +72,8 @@ class KursController extends \BaseController {
 	public function index()
 	{
 		return [
+			"buyS" => $this->getS('buy'),
+			"sellS" => $this->getS('sell'),
 			"buyAverage" => $this->getAverage('buy'),
 			"sellAverage" => $this->getAverage('sell')
 		];
@@ -78,7 +98,21 @@ class KursController extends \BaseController {
 	 */
 	public function store()
 	{
-		//
+		$kurs = new Kurs();
+		$kurs->type = Input::get('type');
+		$kurs->kurs = Input::get('kurs');
+		$kurs->save();
+		$avgBuy = $this->evaluateAverage('buy');
+		$avgSell = $this->evaluateAverage('sell');
+		$sBuy = $this->evaluateS('buy');
+		$sSell = $this->evaluateS('sell');
+		return [
+			"buyS" => $sBuy,
+			"sellS" => $sSell,
+			"buyAverage" => $avgBuy,
+			"sellAverage" => $avgSell,
+			"kurs" => $kurs
+		];
 	}
 
 

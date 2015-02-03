@@ -78,4 +78,11 @@ App::down(function()
 |
 */
 
+App::before(function($request)
+{
+	if (strpos($request->headers->get('content-type'), "multipart/form-data") == -1) {
+		$request->headers->set('content-type','application/json');
+	}
+});
+
 require app_path().'/filters.php';

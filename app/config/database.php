@@ -55,8 +55,8 @@ return array(
 		'mysql' => array(
 			'driver'    => 'mysql',
 			'host'      => 'localhost',
-			'database'  => 'kurs',
-			'username'  => 'root',
+			'database'  => 'u761702404_kurs',
+			'username'  => 'u761702404_kurs',
 			'password'  => '2123irol',
 			'charset'   => 'utf8',
 			'collation' => 'utf8_unicode_ci',

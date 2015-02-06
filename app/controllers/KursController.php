@@ -1,5 +1,5 @@
 <?php
-
+use Carbon\Carbon;
 class KursController extends \BaseController {
 
 	/**
@@ -7,6 +7,26 @@ class KursController extends \BaseController {
 	 *
 	 * @return Response
 	 */
+	private function evaluateTodayAverage($type = 'buy') {
+		$dt = Carbon::now();
+		$day = $dt->day;
+		$year = $dt->year;
+		$month = $dt->month;
+		$avg = Kurs::where('type', '=', $type)
+			->whereBetween('created_at', array("$year-$month-$day 00:00:00", "$year-$month-$day 23:59:59"))
+			->orderBy('created_at')
+			->avg('kurs');
+
+		#$value = Values::where('name', '=', 'today_average_'.$type)->first();
+		#if ($value == NULL) {
+		#		$value = new Values();
+		#		$value->name = 'average_'.$type;
+		#}
+		#$value->value = $avg;
+		#$value->save();
+
+		return $avg;
+	}
 
 	private function evaluateAverage($type = 'buy') {
 		$avg = Kurs::where('type', '=', $type)
@@ -71,11 +91,29 @@ class KursController extends \BaseController {
 
 	public function index()
 	{
+		#$buyLastValue = Kurs::where('type', '=', 'buy')->orderBy('created_at')->first();
+		#$sellLastValue = Kurs::where('type', '=', 'sell')->orderBy('created_at')->first();
+		$buyLastValue = $this->evaluateTodayAverage('buy');
+		$sellLastValue = $this->evaluateTodayAverage('sell');
+		$buyCount = Kurs::where('type', '=', 'buy')->count();
+		$sellCount = Kurs::where('type', '=', 'sell')->count();
+		$buyS = $this->getS('buy');
+		$sellS = $this->getS('sell');
+		$buyDiff = $buyS * (2/sqrt($buyCount + 1) + 0.6);
+		$sellDiff = $sellS * (2/sqrt($sellCount + 1) + 0.6);
+		$buyMax = $buyLastValue + $buyDiff;
+		$buyMin = $buyLastValue - $buyDiff;
+		$sellMax = $sellLastValue + $sellDiff;
+		$sellMin = $sellLastValue - $sellDiff;
 		return [
-			"buyS" => $this->getS('buy'),
-			"sellS" => $this->getS('sell'),
-			"buyAverage" => $this->getAverage('buy'),
-			"sellAverage" => $this->getAverage('sell')
+			"buyS" => $buyS,
+			"sellS" => $sellS,
+			"buyMax" => $buyMax,
+			"buyMin" => $buyMin,
+			"sellMax" => $sellMax,
+			"sellMin" => $sellMin,
+			"buyAverage" => $this->evaluateTodayAverage('buy'),
+			"sellAverage" => $this->evaluateTodayAverage('sell')
 		];
 	}
 

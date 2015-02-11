@@ -25,7 +25,7 @@ class KursController extends \BaseController {
 		return $this->evaluateDateAverage("$year-$month-$day", $type);
 	}
 
-	private function getDateCount($date, $type) {
+	private function getDateCount($date, $type = NULLf) {
 		if (isset($type)) {
 			$count = Kurs::where('type', '=', $type)
 				->whereBetween('created_at', array("$date 00:00:00", "$date 23:59:59"))

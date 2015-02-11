@@ -25,6 +25,27 @@ class KursController extends \BaseController {
 		return $this->evaluateDateAverage("$year-$month-$day", $type);
 	}
 
+	private function getDateCount($date, $type) {
+		if (isset($type)) {
+			$count = Kurs::where('type', '=', $type)
+				->whereBetween('created_at', array("$date 00:00:00", "$date 23:59:59"))
+				->count();
+		}
+		else {
+			$count = Kurs::whereBetween('created_at', array("$date 00:00:00", "$date 23:59:59"))
+				->count();
+		}
+		return $count;
+	}
+
+	private function getTodayCount($type) {
+		$dt = Carbon::now();
+		$day = $dt->day;
+		$year = $dt->year;
+		$month = $dt->month;
+		return $this->getDateCount("$year-$month-$day", $type);
+	}
+
 	private function evaluateYesterdayAverage($type = 'buy') {
 		$dt = Carbon::yesterday();
 		$day = $dt->day;
@@ -118,6 +139,7 @@ class KursController extends \BaseController {
 		$sellMin = round($sellLastValue - $sellDiff);
 		$buyAverage = $this->evaluateTodayAverage('buy');
 		$sellAverage = $this->evaluateTodayAverage('sell');
+		$todayCount = $this->getTodayCount();
 		if ($buyAverage) {
 			$buyAverage = round($buyAverage);
 		}
@@ -132,7 +154,8 @@ class KursController extends \BaseController {
 			"sellMax" => $sellMax,
 			"sellMin" => $sellMin,
 			"buyAverage" => $buyAverage,
-			"sellAverage" => $sellAverage
+			"sellAverage" => $sellAverage,
+			"todayCount" => $todayCount
 		];
 	}
 

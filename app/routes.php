@@ -18,6 +18,11 @@ Route::get('/', function()
 
 Route::group(array('prefix' => 'api/v1'), function () {
 	Route::resource('kurs', 'KursController');
+	Route::get('db', function () {
+		$url = parse_url(getenv("CLEARDB_DATABASE_URL"));
+		$server = $url["host"];
+		return $server;
+	});
 });
 
 Route::get('/', function()

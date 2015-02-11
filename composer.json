@@ -8,9 +8,6 @@
 		"laravel/framework": "4.2.*",
 		"barryvdh/laravel-cors": "0.2.x"
 	},
-  	"require-dev": {
-	  	"heroku/heroku-buildpack-php": "~63.0"
-	},
 	"autoload": {
 		"classmap": [
 			"app/commands",
@@ -37,5 +34,8 @@
 	"config": {
 		"preferred-install": "dist"
 	},
-	"minimum-stability": "stable"
+	"minimum-stability": "stable",
+	"require-dev": {
+		"heroku/heroku-buildpack-php": "~63.0"
+	}
 }

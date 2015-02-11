@@ -214,6 +214,7 @@ class KursController extends \BaseController {
 	{
 		$dateString = Carbon::createFromFormat('d-m-Y', $date)->toDateString();
 		return Kurs::whereBetween('created_at', array("$dateString 00:00:00", "$dateString 23:59:59"))
+			->orderBy('created_at', 'desc')
 			->get();
 	}
 

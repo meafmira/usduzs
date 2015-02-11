@@ -6,6 +6,7 @@ $server = $url["host"];
 $username = $url["user"];
 $password = $url["pass"];
 $db = substr($url["path"], 1);
+var_dump($server);
 
 return array(
 
@@ -63,7 +64,7 @@ return array(
 			'driver'    => 'mysql',
 			'host'      => $server,
 			'database'  => $db,
-			'username'  => $user,
+			'username'  => $username,
 			'password'  => $password,
 			'charset'   => 'utf8',
 			'collation' => 'utf8_unicode_ci',

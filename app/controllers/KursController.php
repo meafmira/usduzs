@@ -8,6 +8,14 @@ class KursController extends \BaseController {
 	 * @return Response
 	 */
 
+	private function getToday() {
+		$dt = Carbon::now();
+		$day = $dt->day;
+		$year = $dt->year;
+		$month = $dt->month;
+		return "$year-$month-$day";
+	}
+
 	private function evaluateDateAverage($date, $type = 'buy') {
 		$avg = Kurs::where('type', '=', $type)
 			->whereBetween('created_at', array("$date 00:00:00", "$date 23:59:59"))
@@ -202,9 +210,11 @@ class KursController extends \BaseController {
 	 * @param  int  $id
 	 * @return Response
 	 */
-	public function show($id)
+	public function show($date)
 	{
-		//
+		$dateString = Carbon::createFromFormat('d-m-Y', $date)->toDateString();
+		return Kurs::whereBetween('created_at', array("$dateString 00:00:00", "$dateString 23:59:59"))
+			->get();
 	}
 
 

@@ -6,6 +6,6 @@
  * Time: 14:05
  */
 
-class Kurs extends Eloquent {
+class Kurs extends Base {
 
 }

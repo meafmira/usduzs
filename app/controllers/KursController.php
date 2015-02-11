@@ -7,25 +7,30 @@ class KursController extends \BaseController {
 	 *
 	 * @return Response
 	 */
+
+	private function evaluateDateAverage($date, $type = 'buy') {
+		$avg = Kurs::where('type', '=', $type)
+			->whereBetween('created_at', array("$date 00:00:00", "$date 23:59:59"))
+			->orderBy('created_at')
+			->avg('kurs');
+
+		return $avg;
+	}
+
 	private function evaluateTodayAverage($type = 'buy') {
 		$dt = Carbon::now();
 		$day = $dt->day;
 		$year = $dt->year;
 		$month = $dt->month;
-		$avg = Kurs::where('type', '=', $type)
-			->whereBetween('created_at', array("$year-$month-$day 00:00:00", "$year-$month-$day 23:59:59"))
-			->orderBy('created_at')
-			->avg('kurs');
+		return $this->evaluateDateAverage("$year-$month-$day", $type);
+	}
 
-		#$value = Values::where('name', '=', 'today_average_'.$type)->first();
-		#if ($value == NULL) {
-		#		$value = new Values();
-		#		$value->name = 'average_'.$type;
-		#}
-		#$value->value = $avg;
-		#$value->save();
-
-		return $avg;
+	private function evaluateYesterdayAverage($type = 'buy') {
+		$dt = Carbon::yesterday();
+		$day = $dt->day;
+		$year = $dt->year;
+		$month = $dt->month;
+		return $this->evaluateDateAverage("$year-$month-$day", $type);
 	}
 
 	private function evaluateAverage($type = 'buy') {
@@ -95,16 +100,30 @@ class KursController extends \BaseController {
 		#$sellLastValue = Kurs::where('type', '=', 'sell')->orderBy('created_at')->first();
 		$buyLastValue = $this->evaluateTodayAverage('buy');
 		$sellLastValue = $this->evaluateTodayAverage('sell');
+		if (!isset($buyLastValue)) {
+			$buyLastValue = $this->evaluateYesterdayAverage('buy');
+		}
+		if (!isset($sellLastValue)) {
+			$sellLastValue = $this->evaluateYesterdayAverage('sell');
+		}
 		$buyCount = Kurs::where('type', '=', 'buy')->count();
 		$sellCount = Kurs::where('type', '=', 'sell')->count();
 		$buyS = $this->getS('buy');
 		$sellS = $this->getS('sell');
 		$buyDiff = $buyS * (2/sqrt($buyCount + 1) + 0.6);
 		$sellDiff = $sellS * (2/sqrt($sellCount + 1) + 0.6);
-		$buyMax = $buyLastValue + $buyDiff;
-		$buyMin = $buyLastValue - $buyDiff;
-		$sellMax = $sellLastValue + $sellDiff;
-		$sellMin = $sellLastValue - $sellDiff;
+		$buyMax = round($buyLastValue + $buyDiff);
+		$buyMin = round($buyLastValue - $buyDiff);
+		$sellMax = round($sellLastValue + $sellDiff);
+		$sellMin = round($sellLastValue - $sellDiff);
+		$buyAverage = $this->evaluateTodayAverage('buy');
+		$sellAverage = $this->evaluateTodayAverage('sell');
+		if ($buyAverage) {
+			$buyAverage = round($buyAverage);
+		}
+		if ($sellAverage) {
+			$sellAverage = round($sellAverage);
+		}
 		return [
 			"buyS" => $buyS,
 			"sellS" => $sellS,
@@ -112,8 +131,8 @@ class KursController extends \BaseController {
 			"buyMin" => $buyMin,
 			"sellMax" => $sellMax,
 			"sellMin" => $sellMin,
-			"buyAverage" => $this->evaluateTodayAverage('buy'),
-			"sellAverage" => $this->evaluateTodayAverage('sell')
+			"buyAverage" => $buyAverage,
+			"sellAverage" => $sellAverage
 		];
 	}
 

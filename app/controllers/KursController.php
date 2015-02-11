@@ -38,7 +38,7 @@ class KursController extends \BaseController {
 		return $count;
 	}
 
-	private function getTodayCount($type) {
+	private function getTodayCount($type = NULL) {
 		$dt = Carbon::now();
 		$day = $dt->day;
 		$year = $dt->year;

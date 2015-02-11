@@ -6,8 +6,10 @@
 	"type": "project",
 	"require": {
 		"laravel/framework": "4.2.*",
-		"barryvdh/laravel-cors": "0.2.x",
-		"heroku/heroku-buildpack-php": "~63.0"
+		"barryvdh/laravel-cors": "0.2.x"
+	},
+  	"require-dev": {
+	  	"heroku/heroku-buildpack-php": "~63.0"
 	},
 	"autoload": {
 		"classmap": [

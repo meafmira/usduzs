@@ -123,28 +123,37 @@ class KursController extends \BaseController {
 		return $s;
 	}
 
+	private function dataCount($type = 'buy') {
+		return Kurs::where('type', '=', $type)->count();
+	}
+
+	private function getDiff($type = 'buy') {
+		$s = $this->getS($type);
+		$count = $this->dataCount($type);
+		$diff = $s * (2/sqrt($count + 1) + 0.6);
+		return $diff;
+	}
+
+	private function getMinMax($type = 'buy') {
+		$diff = $this->getDiff($type);
+		$todayAverage = $this->evaluateTodayAverage($type);
+		if (!isset($todayAverage)) {
+			$todayAverage = $this->evaluateYesterdayAverage($type);
+		}
+		return [
+			"min" => $todayAverage - $diff,
+			"max" => $todayAverage + $diff
+		];
+	}
+
 	public function index()
 	{
-		#$buyLastValue = Kurs::where('type', '=', 'buy')->orderBy('created_at')->first();
-		#$sellLastValue = Kurs::where('type', '=', 'sell')->orderBy('created_at')->first();
-		$buyLastValue = $this->evaluateTodayAverage('buy');
-		$sellLastValue = $this->evaluateTodayAverage('sell');
-		if (!isset($buyLastValue)) {
-			$buyLastValue = $this->evaluateYesterdayAverage('buy');
-		}
-		if (!isset($sellLastValue)) {
-			$sellLastValue = $this->evaluateYesterdayAverage('sell');
-		}
-		$buyCount = Kurs::where('type', '=', 'buy')->count();
-		$sellCount = Kurs::where('type', '=', 'sell')->count();
-		$buyS = $this->getS('buy');
-		$sellS = $this->getS('sell');
-		$buyDiff = $buyS * (2/sqrt($buyCount + 1) + 0.6);
-		$sellDiff = $sellS * (2/sqrt($sellCount + 1) + 0.6);
-		$buyMax = round($buyLastValue + $buyDiff);
-		$buyMin = round($buyLastValue - $buyDiff);
-		$sellMax = round($sellLastValue + $sellDiff);
-		$sellMin = round($sellLastValue - $sellDiff);
+		$buyMinMax = $this->getMinMax('buy');
+		$buyMax = round($buyMinMax['max']);
+		$buyMin = round($buyMinMax['min']);
+		$sellMinMax = $this->getMinMax('sell');
+		$sellMax = round($sellMinMax['max']);
+		$sellMin = round($sellMinMax['min']);
 		$buyAverage = $this->evaluateTodayAverage('buy');
 		$sellAverage = $this->evaluateTodayAverage('sell');
 		$todayCount = $this->getTodayCount();
@@ -155,8 +164,6 @@ class KursController extends \BaseController {
 			$sellAverage = round($sellAverage);
 		}
 		return [
-			"buyS" => $buyS,
-			"sellS" => $sellS,
 			"buyMax" => $buyMax,
 			"buyMin" => $buyMin,
 			"sellMax" => $sellMax,
@@ -186,21 +193,35 @@ class KursController extends \BaseController {
 	 */
 	public function store()
 	{
-		$kurs = new Kurs();
-		$kurs->type = Input::get('type');
-		$kurs->kurs = Input::get('kurs');
-		$kurs->save();
-		$avgBuy = $this->evaluateAverage('buy');
-		$avgSell = $this->evaluateAverage('sell');
-		$sBuy = $this->evaluateS('buy');
-		$sSell = $this->evaluateS('sell');
-		return [
-			"buyS" => $sBuy,
-			"sellS" => $sSell,
-			"buyAverage" => $avgBuy,
-			"sellAverage" => $avgSell,
-			"kurs" => $kurs
-		];
+		$type = Input::get('type');
+		$kurs = intval(Input::get('kurs'));
+		$minMax = $this->getMinMax($type);
+		$min = round($minMax['min']);
+		$max = round($minMax['max']);
+		$validator = Validator::make(
+			[ 'kurs' => $kurs ],
+			[ 'kurs' => "integer|between:$min,$max" ]
+		);
+		if ($validator->fails()) {
+			return Response::make($validator->messages(), 400);
+		}
+		else {
+			$kursObj = new Kurs();
+			$kursObj->type = $type;
+			$kursObj->kurs = $kurs;
+			$kursObj->save();
+			$avgBuy = $this->evaluateAverage('buy');
+			$avgSell = $this->evaluateAverage('sell');
+			$sBuy = $this->evaluateS('buy');
+			$sSell = $this->evaluateS('sell');
+			return [
+				"buyS" => $sBuy,
+				"sellS" => $sSell,
+				"buyAverage" => $avgBuy,
+				"sellAverage" => $avgSell,
+				"kurs" => $kursObj
+			];
+		}
 	}
 
 

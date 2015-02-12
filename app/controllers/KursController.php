@@ -65,6 +65,8 @@ class KursController extends \BaseController {
 	private function evaluateAverage($type = 'buy') {
 		$avg = Kurs::where('type', '=', $type)
 			->orderBy('created_at')
+			->distinct()
+			->select('kurs')
 			->take(1000)
 			->avg('kurs');
 

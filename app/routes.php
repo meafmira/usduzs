@@ -17,6 +17,8 @@ Route::get('/', function()
 });
 
 Route::group(array('prefix' => 'api/v1'), function () {
+	Route::post('kurs/{id}/vote', 'KursController@vote');
+  Route::get('kurs/day-averages', 'KursController@dayAverages');
 	Route::resource('kurs', 'KursController');
 	Route::get('db', function () {
 		$url = parse_url(getenv("CLEARDB_DATABASE_URL"));

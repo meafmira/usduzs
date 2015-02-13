@@ -278,5 +278,20 @@ class KursController extends \BaseController {
 		//
 	}
 
+	public function vote($id) {
+		$kurs = Kurs::find($id);
+		$kurs->vote++;
+		$kurs->save();
+		return $kurs;
+	}
+
+  public function dayAverages() {
+    $dt = Carbon::today()->subDays(6);
+    return Kurs::select(DB::raw('*, ROUND(AVG(kurs)) as avgKurs'))
+      ->orderBy('created_at', 'desc')
+      ->groupBy(DB::raw('year(created_at), month(created_at), day(created_at), type'))
+      ->where('created_at', ">=", $dt)
+      ->get();
+  }
 
 }

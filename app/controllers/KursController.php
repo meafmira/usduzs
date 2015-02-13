@@ -132,7 +132,8 @@ class KursController extends \BaseController {
 	private function getDiff($type = 'buy') {
 		$s = $this->getS($type);
 		$count = $this->dataCount($type);
-		$diff = $s * (3/sqrt($count + 1) + 1.15);
+		$nt = (3/sqrt($count + 1) + 1.15);
+		$diff = $s * $nt;
 		return $diff;
 	}
 

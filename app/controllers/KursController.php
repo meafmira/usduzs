@@ -285,8 +285,8 @@ class KursController extends \BaseController {
 		return $kurs;
 	}
 
-  public function dayAverages() {
-    $dt = Carbon::today()->subDays(6);
+  public function dayAverages($dayBack = 6) {
+    $dt = Carbon::today()->subDays($dayBack);
     return Kurs::select(DB::raw('*, day(created_at) as day, ROUND(AVG(kurs)) as avgKurs'))
       ->orderBy('created_at', 'asc')
       ->groupBy(DB::raw('year(created_at), month(created_at), day(created_at), type'))

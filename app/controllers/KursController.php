@@ -85,12 +85,14 @@ class KursController extends \BaseController {
 		$avg = $this->getAverage($type);
 		$kurses = Kurs::where('type', '=', $type)
 			->orderBy('created_at')
+      ->select(DB::raw('*, ROUND(AVG(kurs)) as avg'))
+      ->groupBy(DB::raw('year(created_at), month(created_at), day(created_at), type'))
 			->take(1000)
 			->get()
 			->toArray();
 		$n = count($kurses);
 		$sum = array_reduce($kurses, function ($carry, $kurs) use ($avg) {
-			return pow($kurs['kurs'] - $avg, 2) + $carry;
+			return pow($kurs['avg'] - $avg, 2) + $carry;
 		}, 0);
 		$s = sqrt($sum / ($n - 1));
 

@@ -1,7 +1,7 @@
 {
-	"name": "laravel/laravel",
-	"description": "Usduzs backend.",
-	"keywords": ["usduzs", "laravel"],
+	"name": "USD/UZS",
+	"description": "USDUZS backend.",
+	"keywords": ["usduzs"],
 	"license": "MIT",
 	"type": "project",
 	"require": {

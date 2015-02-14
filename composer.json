@@ -1,7 +1,7 @@
 {
 	"name": "laravel/laravel",
-	"description": "The Laravel Framework.",
-	"keywords": ["framework", "laravel"],
+	"description": "Usduzs backend.",
+	"keywords": ["usduzs", "laravel"],
 	"license": "MIT",
 	"type": "project",
 	"require": {

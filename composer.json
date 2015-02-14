@@ -15,9 +15,9 @@
 	},
 	"autoload": {
 		"classmap": [
-			"./database",
-            "./app/Http/Controllers",
-            "./app/Models"
+			"database",
+            "app/Http/Controllers",
+            "app/Models"
 		],
 		"psr-4": {
 			"App\\": "app/"
@@ -25,9 +25,9 @@
 	},
 	"autoload-dev": {
 		"classmap": [
-			"./tests/TestCase.php",
-            "./app/Http/Controllers",
-            "./app/Models"
+			"tests/TestCase.php",
+            "app/Http/Controllers",
+            "app/Models"
 		]
 	},
 	"scripts": {

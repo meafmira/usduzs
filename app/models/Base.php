@@ -1,5 +1,9 @@
 <?php
+use Illuminate\Database\Eloquent\SoftDeletes;
+
 class Base extends Eloquent {
+  use SoftDeletes;
+
   public function scopePublished($query) {
     $query->where('published', '=', '1');
   }

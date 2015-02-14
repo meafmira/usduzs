@@ -300,4 +300,11 @@ class KursController extends \BaseController {
       ->get();
   }
 
+  public function places() {
+    return Kurs::select('place')
+      ->where('place', '<>', '')
+      ->distinct()
+      ->get();
+  }
+
 }

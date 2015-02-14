@@ -19,6 +19,7 @@ Route::get('/', function()
 Route::group(array('prefix' => 'api/v1'), function () {
 	Route::post('kurs/{id}/vote', 'KursController@vote');
   Route::get('kurs/day-averages', 'KursController@dayAverages');
+  Route::get('kurs/places', 'KursController@places');
   Route::get('kurs/day-averages/{dayBack}', 'KursController@dayAverages');
 	Route::resource('kurs', 'KursController');
 	Route::get('db', function () {

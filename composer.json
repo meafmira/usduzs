@@ -6,7 +6,7 @@
 	"type": "project",
 	"require": {
 		"laravel/framework": "5.0.*",
-		"barryvdh/laravel-cors": "~0.4"
+		"barryvdh/laravel-cors": "0.4.x@dev"
 	},
 	"require-dev": {
 		"phpunit/phpunit": "~4.0",

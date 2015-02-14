@@ -4,7 +4,7 @@
         "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "2959f197f7b7f7fd61fbe0fd0251c615",
+    "hash": "fc3bcced3bcb647cbf5262f8c2098873",
     "packages": [
         {
             "name": "asm89/stack-cors",
@@ -51,16 +51,16 @@
         },
         {
             "name": "barryvdh/laravel-cors",
-            "version": "v0.4.0",
+            "version": "dev-master",
             "source": {
                 "type": "git",
                 "url": "https://github.com/barryvdh/laravel-cors.git",
-                "reference": "fc49af3afafc181fec478e4dd8f02220518f2a14"
+                "reference": "82fbeb0b1bb12e1a7b9ad690a49ec40f17c0b148"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/barryvdh/laravel-cors/zipball/fc49af3afafc181fec478e4dd8f02220518f2a14",
-                "reference": "fc49af3afafc181fec478e4dd8f02220518f2a14",
+                "url": "https://api.github.com/repos/barryvdh/laravel-cors/zipball/82fbeb0b1bb12e1a7b9ad690a49ec40f17c0b148",
+                "reference": "82fbeb0b1bb12e1a7b9ad690a49ec40f17c0b148",
                 "shasum": ""
             },
             "require": {
@@ -96,7 +96,7 @@
                 "crossdomain",
                 "laravel"
             ],
-            "time": "2015-02-05 08:37:08"
+            "time": "2015-02-12 06:33:43"
         },
         {
             "name": "classpreloader/classpreloader",
@@ -2928,7 +2928,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {
+        "barryvdh/laravel-cors": 20
+    },
     "prefer-stable": false,
     "platform": [],
     "platform-dev": []

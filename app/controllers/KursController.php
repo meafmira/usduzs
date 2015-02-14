@@ -200,6 +200,7 @@ class KursController extends \BaseController {
 	{
 		$type = Input::get('type');
 		$kurs = intval(Input::get('kurs'));
+    $place = Input::get('place');
 		$minMax = $this->getMinMax($type);
 		$min = round($minMax['min']);
 		$max = round($minMax['max']);
@@ -214,6 +215,9 @@ class KursController extends \BaseController {
 			$kursObj = new Kurs();
 			$kursObj->type = $type;
 			$kursObj->kurs = $kurs;
+      if (isset($place)) {
+        $kursObj->place = $place;
+      }
 			$kursObj->save();
 			$avgBuy = $this->evaluateAverage('buy');
 			$avgSell = $this->evaluateAverage('sell');

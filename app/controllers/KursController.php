@@ -7,30 +7,66 @@ class KursController extends \BaseController {
 	 *
 	 * @return Response
 	 */
+
+	private function getToday() {
+		$dt = Carbon::now();
+		$day = $dt->day;
+		$year = $dt->year;
+		$month = $dt->month;
+		return "$year-$month-$day";
+	}
+
+	private function evaluateDateAverage($date, $type = 'buy') {
+		$avg = Kurs::where('type', '=', $type)
+			->whereBetween('created_at', array("$date 00:00:00", "$date 23:59:59"))
+			->orderBy('created_at')
+			->avg('kurs');
+
+		return $avg;
+	}
+
 	private function evaluateTodayAverage($type = 'buy') {
 		$dt = Carbon::now();
 		$day = $dt->day;
 		$year = $dt->year;
 		$month = $dt->month;
-		$avg = Kurs::where('type', '=', $type)
-			->whereBetween('created_at', array("$year-$month-$day 00:00:00", "$year-$month-$day 23:59:59"))
-			->orderBy('created_at')
-			->avg('kurs');
+		return $this->evaluateDateAverage("$year-$month-$day", $type);
+	}
 
-		#$value = Values::where('name', '=', 'today_average_'.$type)->first();
-		#if ($value == NULL) {
-		#		$value = new Values();
-		#		$value->name = 'average_'.$type;
-		#}
-		#$value->value = $avg;
-		#$value->save();
+	private function getDateCount($date, $type = NULL) {
+		if (isset($type)) {
+			$count = Kurs::where('type', '=', $type)
+				->whereBetween('created_at', array("$date 00:00:00", "$date 23:59:59"))
+				->count();
+		}
+		else {
+			$count = Kurs::whereBetween('created_at', array("$date 00:00:00", "$date 23:59:59"))
+				->count();
+		}
+		return $count;
+	}
 
-		return $avg;
+	private function getTodayCount($type = NULL) {
+		$dt = Carbon::now();
+		$day = $dt->day;
+		$year = $dt->year;
+		$month = $dt->month;
+		return $this->getDateCount("$year-$month-$day", $type);
+	}
+
+	private function evaluateYesterdayAverage($type = 'buy') {
+		$dt = Carbon::yesterday();
+		$day = $dt->day;
+		$year = $dt->year;
+		$month = $dt->month;
+		return $this->evaluateDateAverage("$year-$month-$day", $type);
 	}
 
 	private function evaluateAverage($type = 'buy') {
 		$avg = Kurs::where('type', '=', $type)
 			->orderBy('created_at')
+			->distinct()
+			->select('kurs')
 			->take(1000)
 			->avg('kurs');
 
@@ -49,12 +85,14 @@ class KursController extends \BaseController {
 		$avg = $this->getAverage($type);
 		$kurses = Kurs::where('type', '=', $type)
 			->orderBy('created_at')
+      ->select(DB::raw('*, ROUND(AVG(kurs)) as avg'))
+      ->groupBy(DB::raw('year(created_at), month(created_at), day(created_at), type'))
 			->take(1000)
 			->get()
 			->toArray();
 		$n = count($kurses);
 		$sum = array_reduce($kurses, function ($carry, $kurs) use ($avg) {
-			return pow($kurs['kurs'] - $avg, 2) + $carry;
+			return pow($kurs['avg'] - $avg, 2) + $carry;
 		}, 0);
 		$s = sqrt($sum / ($n - 1));
 
@@ -89,31 +127,55 @@ class KursController extends \BaseController {
 		return $s;
 	}
 
+	private function dataCount($type = 'buy') {
+		return Kurs::where('type', '=', $type)->count();
+	}
+
+	private function getDiff($type = 'buy') {
+		$s = $this->getS($type);
+		$count = $this->dataCount($type);
+		$nt = (3/sqrt($count + 1) + 1.15);
+		$diff = $s * $nt;
+		return $diff;
+	}
+
+	private function getMinMax($type = 'buy') {
+		$diff = $this->getDiff($type);
+		$todayAverage = $this->evaluateTodayAverage($type);
+		if (!isset($todayAverage)) {
+			$todayAverage = $this->evaluateYesterdayAverage($type);
+		}
+		return [
+			"min" => $todayAverage - $diff,
+			"max" => $todayAverage + $diff
+		];
+	}
+
 	public function index()
 	{
-		#$buyLastValue = Kurs::where('type', '=', 'buy')->orderBy('created_at')->first();
-		#$sellLastValue = Kurs::where('type', '=', 'sell')->orderBy('created_at')->first();
-		$buyLastValue = $this->evaluateTodayAverage('buy');
-		$sellLastValue = $this->evaluateTodayAverage('sell');
-		$buyCount = Kurs::where('type', '=', 'buy')->count();
-		$sellCount = Kurs::where('type', '=', 'sell')->count();
-		$buyS = $this->getS('buy');
-		$sellS = $this->getS('sell');
-		$buyDiff = $buyS * (2/sqrt($buyCount + 1) + 0.6);
-		$sellDiff = $sellS * (2/sqrt($sellCount + 1) + 0.6);
-		$buyMax = $buyLastValue + $buyDiff;
-		$buyMin = $buyLastValue - $buyDiff;
-		$sellMax = $sellLastValue + $sellDiff;
-		$sellMin = $sellLastValue - $sellDiff;
+		$buyMinMax = $this->getMinMax('buy');
+		$buyMax = round($buyMinMax['max']);
+		$buyMin = round($buyMinMax['min']);
+		$sellMinMax = $this->getMinMax('sell');
+		$sellMax = round($sellMinMax['max']);
+		$sellMin = round($sellMinMax['min']);
+		$buyAverage = $this->evaluateTodayAverage('buy');
+		$sellAverage = $this->evaluateTodayAverage('sell');
+		$todayCount = $this->getTodayCount();
+		if ($buyAverage) {
+			$buyAverage = round($buyAverage);
+		}
+		if ($sellAverage) {
+			$sellAverage = round($sellAverage);
+		}
 		return [
-			"buyS" => $buyS,
-			"sellS" => $sellS,
 			"buyMax" => $buyMax,
 			"buyMin" => $buyMin,
 			"sellMax" => $sellMax,
 			"sellMin" => $sellMin,
-			"buyAverage" => $this->evaluateTodayAverage('buy'),
-			"sellAverage" => $this->evaluateTodayAverage('sell')
+			"buyAverage" => $buyAverage,
+			"sellAverage" => $sellAverage,
+			"todayCount" => $todayCount
 		];
 	}
 
@@ -136,21 +198,39 @@ class KursController extends \BaseController {
 	 */
 	public function store()
 	{
-		$kurs = new Kurs();
-		$kurs->type = Input::get('type');
-		$kurs->kurs = Input::get('kurs');
-		$kurs->save();
-		$avgBuy = $this->evaluateAverage('buy');
-		$avgSell = $this->evaluateAverage('sell');
-		$sBuy = $this->evaluateS('buy');
-		$sSell = $this->evaluateS('sell');
-		return [
-			"buyS" => $sBuy,
-			"sellS" => $sSell,
-			"buyAverage" => $avgBuy,
-			"sellAverage" => $avgSell,
-			"kurs" => $kurs
-		];
+		$type = Input::get('type');
+		$kurs = intval(Input::get('kurs'));
+    $place = Input::get('place');
+		$minMax = $this->getMinMax($type);
+		$min = round($minMax['min']);
+		$max = round($minMax['max']);
+		$validator = Validator::make(
+			[ 'kurs' => $kurs ],
+			[ 'kurs' => "integer|between:$min,$max" ]
+		);
+		if ($validator->fails()) {
+			return Response::make($validator->messages(), 400);
+		}
+		else {
+			$kursObj = new Kurs();
+			$kursObj->type = $type;
+			$kursObj->kurs = $kurs;
+      if (isset($place)) {
+        $kursObj->place = $place;
+      }
+			$kursObj->save();
+			$avgBuy = $this->evaluateAverage('buy');
+			$avgSell = $this->evaluateAverage('sell');
+			$sBuy = $this->evaluateS('buy');
+			$sSell = $this->evaluateS('sell');
+			return [
+				"buyS" => $sBuy,
+				"sellS" => $sSell,
+				"buyAverage" => $avgBuy,
+				"sellAverage" => $avgSell,
+				"kurs" => $kursObj
+			];
+		}
 	}
 
 
@@ -160,9 +240,12 @@ class KursController extends \BaseController {
 	 * @param  int  $id
 	 * @return Response
 	 */
-	public function show($id)
+	public function show($date)
 	{
-		//
+		$dateString = Carbon::createFromFormat('d-m-Y', $date)->toDateString();
+		return Kurs::whereBetween('created_at', array("$dateString 00:00:00", "$dateString 23:59:59"))
+			->orderBy('created_at', 'desc')
+			->get();
 	}
 
 
@@ -201,5 +284,27 @@ class KursController extends \BaseController {
 		//
 	}
 
+	public function vote($id) {
+		$kurs = Kurs::find($id);
+		$kurs->vote++;
+		$kurs->save();
+		return $kurs;
+	}
+
+  public function dayAverages($dayBack = 6) {
+    $dt = Carbon::today()->subDays($dayBack);
+    return Kurs::select(DB::raw('*, day(created_at) as day, ROUND(AVG(kurs)) as avgKurs'))
+      ->orderBy('created_at', 'asc')
+      ->groupBy(DB::raw('year(created_at), month(created_at), day(created_at), type'))
+      ->where('created_at', ">=", $dt)
+      ->get();
+  }
+
+  public function places() {
+    return Kurs::select('place')
+      ->where('place', '<>', '')
+      ->distinct()
+      ->get();
+  }
 
 }

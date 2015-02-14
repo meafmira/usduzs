@@ -1,7 +1,7 @@
 {
 	"name": "laravel/laravel",
-	"description": "The Laravel Framework.",
-	"keywords": ["framework", "laravel"],
+	"description": "Usduzs backend.",
+	"keywords": ["usduzs", "laravel"],
 	"license": "MIT",
 	"type": "project",
 	"require": {
@@ -34,5 +34,8 @@
 	"config": {
 		"preferred-install": "dist"
 	},
-	"minimum-stability": "stable"
+	"minimum-stability": "stable",
+	"require-dev": {
+		"heroku/heroku-buildpack-php": "~63.0"
+	}
 }

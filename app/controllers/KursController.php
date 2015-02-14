@@ -16,6 +16,15 @@ class KursController extends \BaseController {
 		return "$year-$month-$day";
 	}
 
+  private function evaluateLastAverage($type = 'sell', $hours = 24) {
+    $dt = Carbon::now()->subHours($hours);
+    $avg = Kurs::where('type', '=', $type)
+      ->where('created_at', '>=', $dt)
+      ->orderBy('created_at')
+      ->avg('kurs');
+    return $avg;
+  }
+
 	private function evaluateDateAverage($date, $type = 'buy') {
 		$avg = Kurs::where('type', '=', $type)
 			->whereBetween('created_at', array("$date 00:00:00", "$date 23:59:59"))
@@ -141,10 +150,7 @@ class KursController extends \BaseController {
 
 	private function getMinMax($type = 'buy') {
 		$diff = $this->getDiff($type);
-		$todayAverage = $this->evaluateTodayAverage($type);
-		if (!isset($todayAverage)) {
-			$todayAverage = $this->evaluateYesterdayAverage($type);
-		}
+		$todayAverage = $this->evaluateLastAverage($type);
 		return [
 			"min" => $todayAverage - $diff,
 			"max" => $todayAverage + $diff

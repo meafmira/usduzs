@@ -298,12 +298,20 @@ class KursController extends Controller {
 	}
 
   public function dayAverages($dayBack = 6) {
-    $dt = Carbon::today()->subDays($dayBack);
-    return Kurs::select(DB::raw('*, day(created_at) as day, ROUND(AVG(kurs)) as avgKurs'))
-      ->orderBy('created_at', 'asc')
-      ->groupBy(DB::raw('year(created_at), month(created_at), day(created_at), type'))
-      ->where('created_at', ">=", $dt)
-      ->get();
+    $key = "day_averages_$dayBack";
+    if (Cache::has($key)) {
+      $result = Cache::get($key);
+    }
+    else {
+      $dt = Carbon::today()->subDays($dayBack);
+      $result = Kurs::select(DB::raw('*, day(created_at) as day, ROUND(AVG(kurs)) as avgKurs'))
+        ->orderBy('created_at', 'asc')
+        ->groupBy(DB::raw('year(created_at), month(created_at), day(created_at), type'))
+        ->where('created_at', ">=", $dt)
+        ->get();
+      Cache::put($key, $result, 60);
+    }
+    return $result;
   }
 
   public function places() {

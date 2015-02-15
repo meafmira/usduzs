@@ -151,6 +151,9 @@ class KursController extends Controller {
 	private function getMinMax($type = 'buy') {
 		$diff = $this->getDiff($type);
 		$todayAverage = $this->evaluateLastAverage($type);
+    if (!isset($todayAverage)) {
+      $todayAverage = $this->evaluateLastAverage($type, 48);
+    }
 		return [
 			"min" => $todayAverage - $diff,
 			"max" => $todayAverage + $diff
@@ -166,7 +169,13 @@ class KursController extends Controller {
 		$sellMax = round($sellMinMax['max']);
 		$sellMin = round($sellMinMax['min']);
 		$buyAverage = $this->evaluateTodayAverage('buy');
+    if (!isset($buyAverage)) {
+      $buyAverage = $this->evaluateYesterdayAverage('buy');
+    }
 		$sellAverage = $this->evaluateTodayAverage('sell');
+    if (!isset($sellAverage)) {
+      $sellAverage = $this->evaluateYesterdayAverage('sell');
+    }
 		$todayCount = $this->getTodayCount();
 		if ($buyAverage) {
 			$buyAverage = round($buyAverage);

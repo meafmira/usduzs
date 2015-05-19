@@ -224,7 +224,7 @@ class KursController extends Controller {
 		$type = Input::get('type');
 		$kurs = intval(Input::get('kurs'));
     $place = Input::get('place');
-		$ip = Request::getClientIp();
+		$ip = Request::getClientIp(true);
 		$isBanned = BannedIp::where('ip', $ip)->count() == 0 ? false : true;
 		if ($place == 'Админы сделайте модерацию по локациям и регистрацию пользователей') {
 			if (!$isBanned) {
@@ -252,7 +252,7 @@ class KursController extends Controller {
 				$kursObj = new Kurs();
 				$kursObj->type = $type;
 				$kursObj->kurs = $kurs;
-				$kursObj->ip = Request::getClientIp();
+				$kursObj->ip = Request::getClientIp(true);
 	      if (isset($place)) {
 	        $kursObj->place = $place;
 	      }

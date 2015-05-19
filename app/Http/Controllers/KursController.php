@@ -213,6 +213,25 @@ class KursController extends Controller {
 		//
 	}
 
+	function get_client_ip() {
+    $ipaddress = '';
+    if ($_SERVER['HTTP_CLIENT_IP'])
+        $ipaddress = $_SERVER['HTTP_CLIENT_IP'];
+    else if($_SERVER['HTTP_X_FORWARDED_FOR'])
+        $ipaddress = $_SERVER['HTTP_X_FORWARDED_FOR'];
+    else if($_SERVER['HTTP_X_FORWARDED'])
+        $ipaddress = $_SERVER['HTTP_X_FORWARDED'];
+    else if($_SERVER['HTTP_FORWARDED_FOR'])
+        $ipaddress = $_SERVER['HTTP_FORWARDED_FOR'];
+    else if($_SERVER['HTTP_FORWARDED'])
+        $ipaddress = $_SERVER['HTTP_FORWARDED'];
+    else if($_SERVER['REMOTE_ADDR'])
+        $ipaddress = $_SERVER['REMOTE_ADDR'];
+    else
+        $ipaddress = 'UNKNOWN';
+    return $ipaddress;
+}
+
 
 	/**
 	 * Store a newly created resource in storage.
@@ -224,7 +243,7 @@ class KursController extends Controller {
 		$type = Input::get('type');
 		$kurs = intval(Input::get('kurs'));
     $place = Input::get('place');
-		$ip = Request::getClientIp(true);
+		$ip = $this->get_client_ip();
 		$isBanned = BannedIp::where('ip', $ip)->count() == 0 ? false : true;
 		if ($place == 'Админы сделайте модерацию по локациям и регистрацию пользователей') {
 			if (!$isBanned) {
@@ -252,7 +271,7 @@ class KursController extends Controller {
 				$kursObj = new Kurs();
 				$kursObj->type = $type;
 				$kursObj->kurs = $kurs;
-				$kursObj->ip = Request::getClientIp(true);
+				$kursObj->ip = $ip;
 	      if (isset($place)) {
 	        $kursObj->place = $place;
 	      }

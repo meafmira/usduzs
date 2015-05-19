@@ -1,5 +1,6 @@
 <?php
 use Carbon\Carbon;
+use App\BannedIp;
 class KursController extends Controller {
 
 	/**
@@ -222,8 +223,11 @@ class KursController extends Controller {
 		$type = Input::get('type');
 		$kurs = intval(Input::get('kurs'));
     $place = Input::get('place');
-		if ($place == 'Админы сделайте модерацию по локациям и регистрацию пользователей') {
-			return [ "message" => "На хуй иди. Сервис для людей сделан, а ты хуйней занимаешься. И думаешь, что ты крут." ];
+		$ip = Request::getClientIp();
+		$isBanned = BannedIp::where('ip', $ip)->count() == 0 ? false : true;
+
+		if ($isBanned) {
+			return [ "message" => "Go away" ];
 		}
 		else {
 			$minMax = $this->getMinMax($type);

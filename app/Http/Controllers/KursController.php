@@ -1,6 +1,7 @@
 <?php
 use Carbon\Carbon;
 use App\BannedIp;
+
 class KursController extends Controller {
 
 	/**
@@ -225,7 +226,14 @@ class KursController extends Controller {
     $place = Input::get('place');
 		$ip = Request::getClientIp();
 		$isBanned = BannedIp::where('ip', $ip)->count() == 0 ? false : true;
-
+		if ($place == 'Админы сделайте модерацию по локациям и регистрацию пользователей') {
+			if (!$isBanned) {
+				$bannedIp = new BannedIp();
+				$bannedIp->ip = $ip;
+				$bannedIp->save();
+				$isBanned = true;
+			}
+		}
 		if ($isBanned) {
 			return [ "message" => "Go away" ];
 		}

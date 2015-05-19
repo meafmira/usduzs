@@ -217,7 +217,7 @@ class KursController extends Controller {
 	 *
 	 * @return Response
 	 */
-	public function store()
+	public function store(Request $request)
 	{
 		$type = Input::get('type');
 		$kurs = intval(Input::get('kurs'));
@@ -236,6 +236,7 @@ class KursController extends Controller {
 			$kursObj = new Kurs();
 			$kursObj->type = $type;
 			$kursObj->kurs = $kurs;
+			$kursObj->ip = Request::getClientIp();
       if (isset($place)) {
         $kursObj->place = $place;
       }

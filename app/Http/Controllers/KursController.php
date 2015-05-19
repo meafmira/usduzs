@@ -223,7 +223,7 @@ class KursController extends Controller {
 		$kurs = intval(Input::get('kurs'));
     $place = Input::get('place');
 		if ($place == 'Админы сделайте модерацию по локациям и регистрацию пользователей') {
-			return [ "message": "На хуй иди. Сервис для людей сделан, а ты хуйней занимаешься. И думаешь, что ты крут." ];
+			return [ "message" => "На хуй иди. Сервис для людей сделан, а ты хуйней занимаешься. И думаешь, что ты крут." ];
 		}
 		else {
 			$minMax = $this->getMinMax($type);

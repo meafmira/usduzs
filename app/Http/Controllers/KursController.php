@@ -222,36 +222,41 @@ class KursController extends Controller {
 		$type = Input::get('type');
 		$kurs = intval(Input::get('kurs'));
     $place = Input::get('place');
-		$minMax = $this->getMinMax($type);
-		$min = round($minMax['min']);
-		$max = round($minMax['max']);
-		$validator = Validator::make(
-			[ 'kurs' => $kurs ],
-			[ 'kurs' => "integer|between:$min,$max" ]
-		);
-		if ($validator->fails()) {
-			return Response::make($validator->messages(), 400);
+		if ($place == 'Админы сделайте модерацию по локациям и регистрацию пользователей') {
+			return [ "message": "На хуй иди. Сервис для людей сделан, а ты хуйней занимаешься. И думаешь, что ты крут." ];
 		}
 		else {
-			$kursObj = new Kurs();
-			$kursObj->type = $type;
-			$kursObj->kurs = $kurs;
-			$kursObj->ip = Request::getClientIp();
-      if (isset($place)) {
-        $kursObj->place = $place;
-      }
-			$kursObj->save();
-			$avgBuy = $this->evaluateAverage('buy');
-			$avgSell = $this->evaluateAverage('sell');
-			$sBuy = $this->evaluateS('buy');
-			$sSell = $this->evaluateS('sell');
-			return [
-				"buyS" => $sBuy,
-				"sellS" => $sSell,
-				"buyAverage" => $avgBuy,
-				"sellAverage" => $avgSell,
-				"kurs" => $kursObj
-			];
+			$minMax = $this->getMinMax($type);
+			$min = round($minMax['min']);
+			$max = round($minMax['max']);
+			$validator = Validator::make(
+				[ 'kurs' => $kurs ],
+				[ 'kurs' => "integer|between:$min,$max" ]
+			);
+			if ($validator->fails()) {
+				return Response::make($validator->messages(), 400);
+			}
+			else {
+				$kursObj = new Kurs();
+				$kursObj->type = $type;
+				$kursObj->kurs = $kurs;
+				$kursObj->ip = Request::getClientIp();
+	      if (isset($place)) {
+	        $kursObj->place = $place;
+	      }
+				$kursObj->save();
+				$avgBuy = $this->evaluateAverage('buy');
+				$avgSell = $this->evaluateAverage('sell');
+				$sBuy = $this->evaluateS('buy');
+				$sSell = $this->evaluateS('sell');
+				return [
+					"buyS" => $sBuy,
+					"sellS" => $sSell,
+					"buyAverage" => $avgBuy,
+					"sellAverage" => $avgSell,
+					"kurs" => $kursObj
+				];
+			}
 		}
 	}
 

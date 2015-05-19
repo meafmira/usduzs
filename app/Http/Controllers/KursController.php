@@ -25,50 +25,55 @@ class KursController extends Controller {
     return $avg;
   }
 
-	private function evaluateDateAverage($date, $type = 'buy') {
+	private function evaluateDateAverage($date, $type = 'buy', $place) {
 		$avg = Kurs::where('type', '=', $type)
 			->whereBetween('created_at', array("$date 00:00:00", "$date 23:59:59"))
-			->orderBy('created_at')
-			->avg('kurs');
+			->orderBy('created_at');
+
+    if (isset($place)) $avg = $avg->where('place', '=', $place);
+
+		$avg = $avg->avg('kurs');
 
 		return $avg;
 	}
 
-	private function evaluateTodayAverage($type = 'buy') {
+	private function evaluateTodayAverage($type = 'buy', $place) {
 		$dt = Carbon::now();
 		$day = $dt->day;
 		$year = $dt->year;
 		$month = $dt->month;
-		return $this->evaluateDateAverage("$year-$month-$day", $type);
+		return $this->evaluateDateAverage("$year-$month-$day", $type, $place);
 	}
 
-	private function getDateCount($date, $type = NULL) {
+	private function getDateCount($date, $type = NULL, $place) {
 		if (isset($type)) {
 			$count = Kurs::where('type', '=', $type)
-				->whereBetween('created_at', array("$date 00:00:00", "$date 23:59:59"))
-				->count();
+				->whereBetween('created_at', array("$date 00:00:00", "$date 23:59:59"));
 		}
 		else {
-			$count = Kurs::whereBetween('created_at', array("$date 00:00:00", "$date 23:59:59"))
-				->count();
+			$count = Kurs::whereBetween('created_at', array("$date 00:00:00", "$date 23:59:59"));
 		}
+    if (isset($place)) {
+      $count = $count->where('place', '=', $place);
+    }
+    $count = $count->count();
 		return $count;
 	}
 
-	private function getTodayCount($type = NULL) {
+	private function getTodayCount($type = NULL, $place) {
 		$dt = Carbon::now();
 		$day = $dt->day;
 		$year = $dt->year;
 		$month = $dt->month;
-		return $this->getDateCount("$year-$month-$day", $type);
+		return $this->getDateCount("$year-$month-$day", $type, $place);
 	}
 
-	private function evaluateYesterdayAverage($type = 'buy') {
+	private function evaluateYesterdayAverage($type = 'buy', $place) {
 		$dt = Carbon::yesterday();
 		$day = $dt->day;
 		$year = $dt->year;
 		$month = $dt->month;
-		return $this->evaluateDateAverage("$year-$month-$day", $type);
+		return $this->evaluateDateAverage("$year-$month-$day", $type, $place);
 	}
 
 	private function evaluateAverage($type = 'buy') {
@@ -168,15 +173,16 @@ class KursController extends Controller {
 		$sellMinMax = $this->getMinMax('sell');
 		$sellMax = round($sellMinMax['max']);
 		$sellMin = round($sellMinMax['min']);
-		$buyAverage = $this->evaluateTodayAverage('buy');
+    $place = Input::get('place');
+		$buyAverage = $this->evaluateTodayAverage('buy', $place);
     if (!isset($buyAverage)) {
-      $buyAverage = $this->evaluateYesterdayAverage('buy');
+      $buyAverage = $this->evaluateYesterdayAverage('buy', $place);
     }
-		$sellAverage = $this->evaluateTodayAverage('sell');
+		$sellAverage = $this->evaluateTodayAverage('sell', $place);
     if (!isset($sellAverage)) {
-      $sellAverage = $this->evaluateYesterdayAverage('sell');
+      $sellAverage = $this->evaluateYesterdayAverage('sell', $place);
     }
-		$todayCount = $this->getTodayCount();
+		$todayCount = $this->getTodayCount(NULL, $place);
 		if ($buyAverage) {
 			$buyAverage = round($buyAverage);
 		}
@@ -211,7 +217,7 @@ class KursController extends Controller {
 	 *
 	 * @return Response
 	 */
-	public function store()
+	public function store(Request $request)
 	{
 		$type = Input::get('type');
 		$kurs = intval(Input::get('kurs'));
@@ -230,6 +236,7 @@ class KursController extends Controller {
 			$kursObj = new Kurs();
 			$kursObj->type = $type;
 			$kursObj->kurs = $kurs;
+			$kursObj->ip = Request::getClientIp();
       if (isset($place)) {
         $kursObj->place = $place;
       }
@@ -257,10 +264,14 @@ class KursController extends Controller {
 	 */
 	public function show($date)
 	{
+    $place = Input::get('place');
 		$dateString = Carbon::createFromFormat('d-m-Y', $date)->toDateString();
-		return Kurs::whereBetween('created_at', array("$dateString 00:00:00", "$dateString 23:59:59"))
-			->orderBy('created_at', 'desc')
-			->get();
+		$result = Kurs::whereBetween('created_at', array("$dateString 00:00:00", "$dateString 23:59:59"))
+			->orderBy('created_at', 'desc');
+    if (isset($place)) {
+      $result = $result->where('place', '=', $place);
+    }
+    return $result->get();
 	}
 
 
@@ -307,12 +318,29 @@ class KursController extends Controller {
 	}
 
   public function dayAverages($dayBack = 6) {
-    $dt = Carbon::today()->subDays($dayBack);
-    return Kurs::select(DB::raw('*, day(created_at) as day, ROUND(AVG(kurs)) as avgKurs'))
-      ->orderBy('created_at', 'asc')
-      ->groupBy(DB::raw('year(created_at), month(created_at), day(created_at), type'))
-      ->where('created_at', ">=", $dt)
-      ->get();
+    $place = Input::get('place');
+    $key = "day_averages_$dayBack";
+    if (isset($place)) {
+      $key .= $place;
+    }
+    if (Cache::has($key)) {
+      $result = Cache::get($key);
+    }
+    else {
+      $dt = Carbon::today()->subDays($dayBack);
+      $result = Kurs::select(DB::raw('*, day(created_at) as day, ROUND(AVG(kurs)) as avgKurs'))
+        ->orderBy('created_at', 'asc')
+        ->groupBy(DB::raw('year(created_at), month(created_at), day(created_at), type'))
+        ->where('created_at', ">=", $dt);
+
+      if (isset($place)) {
+        $result = $result->where('place', '=', $place);
+      }
+
+      $result = $result->get();
+      Cache::put($key, $result, 60);
+    }
+    return $result;
   }
 
   public function places() {
